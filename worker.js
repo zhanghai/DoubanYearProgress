@@ -93,7 +93,8 @@ function run() {
         return;
     }
 
-    sendBroadcast(generateText());
+    sendBroadcast('Hello, Douban!');
+
     schedule.scheduleJob({
         hour: 10,
         minute: 0
