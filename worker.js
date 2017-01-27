@@ -79,8 +79,8 @@ function generateText () {
     const yearEnd = moment(now).add(1, 'year');
     const progress = Math.round(100 * now.diff(yearStart) / yearEnd.diff(yearStart));
     let text = '';
-    for (let i = 0; i <= 100; i += 5) {
-        text += i < progress ? '▓' : '░';
+    for (let i = 5; i <= 100; i += 5) {
+        text += i <= progress ? '▓' : '░';
     }
     text += ' ' + progress + '%';
     text += ' #' + now.get('year') + '#'
