@@ -83,6 +83,7 @@ function generateText () {
         text += i < progress ? '▓' : '░';
     }
     text += ' ' + progress + '%';
+    text += ' #' + now.get('year') + '#'
     return text;
 }
 
