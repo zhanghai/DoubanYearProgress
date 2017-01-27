@@ -1,0 +1,22 @@
+{
+  "name": "douban-year-progress",
+  "version": "1.0.0",
+  "description": "Year progress for Douban",
+  "main": "worker.js",
+  "dependencies": {
+    "moment-timezone": "^0.5.11",
+    "node-schedule": "^1.2.0",
+    "request": "^2.79.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node worker.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DreaminginCodeZH/DoubanYearProgress"
+  },
+  "author": "Zhang Hai",
+  "license": "MIT"
+}
