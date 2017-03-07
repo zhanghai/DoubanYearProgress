@@ -6,6 +6,9 @@ const schedule = require('node-schedule');
 
 const config = require('./config.js');
 
+const userAgent = `api-client/2.0 com.douban.shuo/2.2.7(123) Android/${config.api.device.sdkInt} `
+    + `${config.api.device.product} ${config.api.device.manufacturer} ${config.api.device.model}`;
+
 let accessToken = null;
 
 function authenticate(callback) {
@@ -13,11 +16,11 @@ function authenticate(callback) {
         url: 'https://www.douban.com/service/auth2/token',
         encoding: 'utf8',
         headers: {
-            'User-Agent': 'api-client/2.0 com.douban.shuo/2.2.7(123) Android/23 NX510J nubia NX510J'
+            'User-Agent': userAgent
         },
         form: {
-            client_id: config.apiKey,
-            client_secret: config.apiSecret,
+            client_id: config.api.key,
+            client_secret: config.api.secret,
             redirect_uri: 'http://shuo.douban.com/!service/android',
             grant_type: 'password',
             username: config.username,
@@ -46,8 +49,8 @@ function sendBroadcast(text, callback) {
         url: 'https://api.douban.com/v2/lifestream/statuses',
         encoding: 'utf8',
         headers: {
-            'User-Agent': 'api-client/2.0 com.douban.shuo/2.2.7(123) Android/23 NX510J nubia NX510J',
-            'Authorization': 'Bearer ' + accessToken
+            'User-Agent': userAgent,
+            'Authorization': `Bearer ${accessToken}`
         },
         form: {
             version: 2,
@@ -82,8 +85,8 @@ function generateText () {
     for (let i = 5; i <= 100; i += 5) {
         text += i <= progress ? '▓' : '░';
     }
-    text += ' ' + progress + '%';
-    text += ' #' + now.get('year') + '#'
+    text += ` ${progress}%`;
+    text += ` #${now.get('year')}#`;
     return text;
 }
 

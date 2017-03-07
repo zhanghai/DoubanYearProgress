@@ -1,8 +1,16 @@
 'use strict';
 
 module.exports = {
-    apiKey: '',
-    apiSecret: '',
+    api: {
+        key: '',
+        secret: '',
+        device: {
+            sdkInt: 0,
+            product: '',
+            manufacturer: '',
+            model: ''
+        }
+    },
     username: '',
     password: ''
 };
