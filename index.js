@@ -76,7 +76,7 @@ function sendBroadcast(text, callback) {
 function generateText () {
     const now = moment().tz('Asia/Shanghai');
     const yearStart = moment(now).startOf('year');
-    const yearEnd = moment(now).add(1, 'year');
+    const yearEnd = moment(yearStart).add(1, 'year');
     const progress = Math.round(1000 * now.diff(yearStart) / yearEnd.diff(yearStart)) / 10;
     let text = '';
     for (let i = 5; i <= 100; i += 5) {
