@@ -1,18 +1,26 @@
 'use strict';
 
+require('util.promisify').shim();
+
+const fs = require('fs');
+const util = require('util');
+
+const ICal = require('ical.js');
 const moment = require('moment-timezone');
-const request = require('request');
-const schedule = require('node-schedule');
+const Request = require('request-promise-native');
+const Schedule = require('node-schedule');
 
 const config = require('./config.js');
 
+const timezone = 'Asia/Shanghai';
+
 const userAgent = `api-client/2.0 com.douban.shuo/2.2.7(123) Android/${config.api.device.sdkInt} `
-    + `${config.api.device.product} ${config.api.device.manufacturer} ${config.api.device.model}`;
+        + `${config.api.device.product} ${config.api.device.manufacturer} ${config.api.device.model}`;
 
 let accessToken = null;
 
-function authenticate(callback) {
-    request.post({
+async function authenticate() {
+    const body = await Request.post({
         url: 'https://www.douban.com/service/auth2/token',
         encoding: 'utf8',
         headers: {
@@ -27,57 +35,74 @@ function authenticate(callback) {
             password: config.password
         },
         json: true
-    }, (error, response, body) => {
-        if (error) {
-            console.error(error);
-            return;
-        }
-        if (!body.access_token) {
-            console.error(body);
-            return;
-        }
-        console.log(body);
-        accessToken = body.access_token;
-        if (typeof callback === 'function') {
-            callback();
-        }
     });
+    if (!body.access_token) {
+        throw body;
+    }
+    console.log(body);
+    accessToken = body.access_token;
 }
 
-function sendBroadcast(text, callback) {
-    request.post({
-        url: 'https://api.douban.com/v2/lifestream/statuses',
-        encoding: 'utf8',
-        headers: {
-            'User-Agent': userAgent,
-            'Authorization': `Bearer ${accessToken}`
-        },
-        form: {
-            version: 2,
-            text: text,
-        },
-        json: true,
-    }, (error, response, body) => {
-        if (error) {
-            console.error(error);
-            switch (error.code) {
-                case 103: // INVALID_ACCESS_TOKEN
-                case 106: // ACCESS_TOKEN_HAS_EXPIRED
-                case 119: // INVALID_REFRESH_TOKEN
-                case 123: // ACCESS_TOKEN_HAS_EXPIRED_SINCE_PASSWORD_CHANGED
-                    authenticate(() => sendBroadcast(text));
-            }
-            return;
-        }
+async function sendBroadcast(text) {
+    try {
+        const body = await Request.post({
+            url: 'https://api.douban.com/v2/lifestream/statuses',
+            encoding: 'utf8',
+            headers: {
+                'User-Agent': userAgent,
+                'Authorization': `Bearer ${accessToken}`
+            },
+            form: {
+                version: 2,
+                text: text,
+            },
+            json: true,
+        });
         console.log(body);
-        if (typeof callback === 'function') {
-            callback();
+    } catch (error) {
+        switch (error.code) {
+            case 103: // INVALID_ACCESS_TOKEN
+            case 106: // ACCESS_TOKEN_HAS_EXPIRED
+            case 119: // INVALID_REFRESH_TOKEN
+            case 123: // ACCESS_TOKEN_HAS_EXPIRED_SINCE_PASSWORD_CHANGED
+                await authenticate();
+                await sendBroadcast(text);
+                break;
+            default:
+                throw error;
         }
-    });
+    }
 }
 
-function generateText () {
-    const now = moment().tz('Asia/Shanghai');
+const readFile = util.promisify(fs.readFile);
+let holidaysCache = null;
+async function getHolidays() {
+    if (!holidaysCache) {
+        const iCalData = await readFile('china__zh_cn@holiday.calendar.google.com.ics', 'utf8');
+        const iCalComponent = new ICal.Component(ICal.parse(iCalData));
+        const events = iCalComponent.getAllSubcomponents('vevent').map(vevent => new ICal.Event(vevent));
+        holidaysCache = events.map(event => ({
+            name: event.summary,
+            start: moment(event.startDate.toString()).tz(timezone),
+            end: moment(event.endDate.toString()).tz(timezone)
+        }));
+    }
+    return holidaysCache;
+}
+
+async function getHolidayNamesForTime(time) {
+    const holidays = await getHolidays();
+    const holidayNames = [];
+    for (const holiday of holidays) {
+        if (time.isSameOrAfter(holiday.start) && time.isBefore(holiday.end)) {
+            holidayNames.push(holiday.name);
+        }
+    }
+    return holidayNames;
+}
+
+async function generateText() {
+    const now = moment().tz(timezone);
     const yearStart = moment(now).startOf('year');
     const yearEnd = moment(yearStart).add(1, 'year');
     const progress = Math.round(1000 * now.diff(yearStart) / yearEnd.diff(yearStart)) / 10;
@@ -87,22 +112,22 @@ function generateText () {
     }
     text += ` ${progress}%`;
     text += ` #${now.get('year')}#`;
+    for (const holidayName of await getHolidayNamesForTime(now)) {
+        text += ` #${holidayName}#`;
+    }
     return text;
 }
 
-function run() {
+async function run() {
 
-    if (!accessToken) {
-        authenticate(run);
-        return;
-    }
+    await authenticate();
 
-    sendBroadcast('Hello, Douban!');
+    await sendBroadcast('Hello, Douban!');
 
-    schedule.scheduleJob({
+    Schedule.scheduleJob({
         hour: 10,
         minute: 0
-    }, () => sendBroadcast(generateText()));
+    }, async () => await sendBroadcast(await generateText()));
 }
 
 run();

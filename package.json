@@ -4,9 +4,12 @@
   "description": "Year progress for Douban",
   "main": "index.js",
   "dependencies": {
+    "ical.js": "^1.2.2",
     "moment-timezone": "^0.5.11",
     "node-schedule": "^1.2.0",
-    "request": "^2.79.0"
+    "request": "^2.81.0",
+    "request-promise-native": "^1.0.4",
+    "util.promisify": "^1.0.0"
   },
   "devDependencies": {},
   "scripts": {
