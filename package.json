@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "ical.js": "^1.2.2",
+    "lunar-calendar": "^0.1.4",
     "moment-timezone": "^0.5.11",
     "node-schedule": "^1.2.0",
     "request": "^2.81.0",

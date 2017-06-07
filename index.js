@@ -6,6 +6,7 @@ const fs = require('fs');
 const util = require('util');
 
 const ICal = require('ical.js');
+const LunarCalendar = require('lunar-calendar');
 const moment = require('moment-timezone');
 const Request = require('request-promise-native');
 const Schedule = require('node-schedule');
@@ -19,6 +20,9 @@ const userAgent = `api-client/2.0 com.douban.shuo/2.2.7(123) Android/${config.ap
 
 let accessToken = null;
 
+/**
+ * @return {Promise.<void>}
+ */
 async function authenticate() {
     const body = await Request.post({
         url: 'https://www.douban.com/service/auth2/token',
@@ -43,6 +47,10 @@ async function authenticate() {
     accessToken = body.access_token;
 }
 
+/**
+ * @param {string} text
+ * @return {Promise.<void>}
+ */
 async function sendBroadcast(text) {
     try {
         const body = await Request.post({
@@ -74,8 +82,20 @@ async function sendBroadcast(text) {
     }
 }
 
+/**
+ * @param {Moment} time
+ * @return {String}
+ */
+function getSolarTermForTime(time) {
+    return LunarCalendar.solarToLunar(time.year(), time.month() + 1, time.date()).term || null;
+}
+
 const readFile = util.promisify(fs.readFile);
 let holidaysCache = null;
+
+/**
+ * @return {Promise.<[{ name: string, start: Moment, end: Moment }]>}
+ */
 async function getHolidays() {
     if (!holidaysCache) {
         const iCalData = await readFile('china__zh_cn@holiday.calendar.google.com.ics', 'utf8');
@@ -90,6 +110,10 @@ async function getHolidays() {
     return holidaysCache;
 }
 
+/**
+ * @param {Moment} time
+ * @return {Promise.<[string]>}
+ */
 async function getHolidayNamesForTime(time) {
     const holidays = await getHolidays();
     const holidayNames = [];
@@ -101,6 +125,9 @@ async function getHolidayNamesForTime(time) {
     return holidayNames;
 }
 
+/**
+ * @return {Promise.<string>}
+ */
 async function generateText() {
     const now = moment().tz(timezone);
     const yearStart = moment(now).startOf('year');
@@ -112,13 +139,20 @@ async function generateText() {
     }
     text += ` ${progress}%`;
     text += ` #${now.get('year')}#`;
+    const solarTerm = getSolarTermForTime(now);
+    if (solarTerm) {
+        text += ` #${solarTerm}#`;
+    }
     for (const holidayName of await getHolidayNamesForTime(now)) {
         text += ` #${holidayName}#`;
     }
     return text;
 }
 
-async function run() {
+/**
+ * @return {Promise.<void>}
+ */
+async function main() {
 
     await authenticate();
 
@@ -130,4 +164,4 @@ async function run() {
     }, async () => await sendBroadcast(await generateText()));
 }
 
-run();
+main();
