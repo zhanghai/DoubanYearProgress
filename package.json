@@ -6,10 +6,10 @@
   "dependencies": {
     "date-chinese": "^1.0.3",
     "ical.js": "^1.2.2",
-    "moment-timezone": "^0.5.11",
-    "node-schedule": "^1.2.0",
-    "request": "^2.81.0",
-    "request-promise-native": "^1.0.4",
+    "moment-timezone": "^0.5.14",
+    "node-schedule": "^1.2.5",
+    "request": "^2.83.0",
+    "request-promise-native": "^1.0.5",
     "util.promisify": "^1.0.0"
   },
   "devDependencies": {},
