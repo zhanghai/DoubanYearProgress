@@ -5,8 +5,8 @@ require('util.promisify').shim();
 const fs = require('fs');
 const util = require('util');
 
+const CalendarChinese = require('date-chinese').CalendarChinese;
 const ICal = require('ical.js');
-const LunarCalendar = require('lunar-calendar');
 const moment = require('moment-timezone');
 const Request = require('request-promise-native');
 const Schedule = require('node-schedule');
@@ -82,12 +82,31 @@ async function sendBroadcast(text) {
     }
 }
 
+const SOLAR_TERM_NAMES = [
+    "立春", "雨水", "惊蛰", "春分", "清明", "谷雨",
+    "立夏", "小满", "芒种", "夏至", "小暑", "大暑",
+    "立秋", "处暑", "白露", "秋分", "寒露", "霜降",
+    "立冬", "小雪", "大雪", "冬至", "小寒", "大寒"
+];
+
 /**
  * @param {Moment} time
  * @return {String}
  */
 function getSolarTermForTime(time) {
-    return LunarCalendar.solarToLunar(time.year(), time.month() + 1, time.date()).term || null;
+    const calendarChinese = new CalendarChinese();
+    for (let i = 0; i < 24; ++i) {
+        const dateObject = calendarChinese.fromJDE(calendarChinese.solarTerm(i + 1, time.year())).toGregorian();
+        const date = moment({
+            year: dateObject.year,
+            month: dateObject.month - 1,
+            day : dateObject.day
+        }).tz(timezone);
+        if (date.isSame(time, 'day')) {
+            return SOLAR_TERM_NAMES[i];
+        }
+    }
+    return null;
 }
 
 const readFile = util.promisify(fs.readFile);
@@ -149,6 +168,10 @@ async function generateText() {
     return text;
 }
 
+async function sendYearProgress() {
+    return await sendBroadcast(await generateText());
+}
+
 /**
  * @return {Promise.<void>}
  */
@@ -156,12 +179,12 @@ async function main() {
 
     await authenticate();
 
-    await sendBroadcast('Hello, Douban!');
+    await sendYearProgress();
 
     Schedule.scheduleJob({
         hour: 10,
         minute: 0
-    }, async () => await sendBroadcast(await generateText()));
+    }, sendYearProgress);
 }
 
 main();

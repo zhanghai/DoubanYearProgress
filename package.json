@@ -4,8 +4,8 @@
   "description": "Year progress for Douban",
   "main": "index.js",
   "dependencies": {
+    "date-chinese": "^1.0.3",
     "ical.js": "^1.2.2",
-    "lunar-calendar": "^0.1.4",
     "moment-timezone": "^0.5.11",
     "node-schedule": "^1.2.0",
     "request": "^2.81.0",
