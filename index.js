@@ -185,6 +185,15 @@ async function main() {
         hour: 10,
         minute: 0
     }, sendYearProgress);
+
+    Schedule.scheduleJob({
+        month: 11,
+        date: 31,
+        hour: 23,
+        minute: 59,
+        // Allow some execution time.
+        second: 50
+    }, sendYearProgress);
 }
 
 main();
