@@ -68,17 +68,18 @@ async function sendBroadcast(text) {
         });
         console.log(body);
     } catch (error) {
-        switch (error.code) {
-            case 103: // INVALID_ACCESS_TOKEN
-            case 106: // ACCESS_TOKEN_HAS_EXPIRED
-            case 119: // INVALID_REFRESH_TOKEN
-            case 123: // ACCESS_TOKEN_HAS_EXPIRED_SINCE_PASSWORD_CHANGED
-                await authenticate();
-                await sendBroadcast(text);
-                break;
-            default:
-                throw error;
+        if (error && error.response) {
+            switch (error.response.code) {
+                case 103: // INVALID_ACCESS_TOKEN
+                case 106: // ACCESS_TOKEN_HAS_EXPIRED
+                case 119: // INVALID_REFRESH_TOKEN
+                case 123: // ACCESS_TOKEN_HAS_EXPIRED_SINCE_PASSWORD_CHANGED
+                    await authenticate();
+                    await sendBroadcast(text);
+                    break;
+            }
         }
+        throw error;
     }
 }
 
