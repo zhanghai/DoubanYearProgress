@@ -68,15 +68,15 @@ async function sendBroadcast(text) {
         });
         console.log(body);
     } catch (error) {
-        if (error && error.response) {
-            switch (error.response.code) {
+        if (error && error.response && error.response.body) {
+            switch (error.response.body.code) {
                 case 103: // INVALID_ACCESS_TOKEN
                 case 106: // ACCESS_TOKEN_HAS_EXPIRED
                 case 119: // INVALID_REFRESH_TOKEN
                 case 123: // ACCESS_TOKEN_HAS_EXPIRED_SINCE_PASSWORD_CHANGED
                     await authenticate();
                     await sendBroadcast(text);
-                    break;
+                    return;
             }
         }
         throw error;
@@ -179,14 +179,12 @@ async function sendYearProgress() {
 async function main() {
 
     await authenticate();
-
     await sendYearProgress();
 
     Schedule.scheduleJob({
         hour: 10,
         minute: 0
     }, sendYearProgress);
-
     Schedule.scheduleJob({
         month: 11,
         date: 31,
