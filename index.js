@@ -1,5 +1,8 @@
 'use strict';
 
+if (!global.URL) {
+    global.URL = require('url').URL;
+}
 require('util.promisify').shim();
 
 const crypto = require('crypto');
