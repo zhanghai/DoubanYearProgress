@@ -2,6 +2,7 @@
 
 require('util.promisify').shim();
 
+const crypto = require('crypto');
 const fs = require('fs');
 const util = require('util');
 
@@ -15,17 +16,57 @@ const config = require('./config.js');
 
 const timezone = 'Asia/Shanghai';
 
-const userAgent = `api-client/2.0 com.douban.shuo/2.2.7(123) Android/${config.api.device.sdkInt} `
-        + `${config.api.device.product} ${config.api.device.manufacturer} ${config.api.device.model}`;
+const userAgent = `api-client/1 com.douban.frodo/6.0.1(138) Android/${config.api.device.sdkInt} product/${
+        config.api.device.product} vendor/${config.api.device.manufacturer} model/${config.api.device.model
+        }  rom/android  network/wifi`;
 
 let accessToken = null;
+
+const FrodoRequest = Request.defaults(params => {
+    let signature = params.method;
+    const path = new URL(params.url).pathname;
+    const signaturePath = encodeURIComponent(decodeURIComponent(path).replace(/\/$/, ''));
+    signature += `&${signaturePath}`;
+    if (params.headers && params.headers.Authorization) {
+        const signatureAuthToken = params.headers.Authorization.substring(7);
+        signature += `&${signatureAuthToken}`;
+    }
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    signature += `&${timestamp}`;
+    signature = crypto.createHmac('sha1', config.api.secret).update(signature).digest('base64');
+    switch (params.method) {
+        case "PATCH":
+        case "POST":
+        case "PROPPATCH":
+        case "PUT":
+        case "REPORT":
+            if (params.formData) {
+                params.formData._sig = signature;
+                params.formData._ts = timestamp;
+            } else {
+                if (!params.form) {
+                    params.form = {};
+                }
+                params.form._sig = signature;
+                params.form._ts = timestamp;
+            }
+            break;
+        default: {
+            const url = new URL(params.url);
+            url.searchParams.append('_sig', signature);
+            url.searchParams.append('_ts', timestamp);
+            params.url = url.href;
+        }
+    }
+    return Request(params);
+});
 
 /**
  * @return {Promise.<void>}
  */
 async function authenticate() {
-    const body = await Request.post({
-        url: 'https://www.douban.com/service/auth2/token',
+    const body = await FrodoRequest.post({
+        url: 'https://frodo.douban.com/service/auth2/token',
         encoding: 'utf8',
         headers: {
             'User-Agent': userAgent
@@ -33,7 +74,7 @@ async function authenticate() {
         form: {
             client_id: config.api.key,
             client_secret: config.api.secret,
-            redirect_uri: 'http://shuo.douban.com/!service/android',
+            redirect_uri: 'frodo://app/oauth/callback/',
             grant_type: 'password',
             username: config.username,
             password: config.password
@@ -53,16 +94,15 @@ async function authenticate() {
  */
 async function sendBroadcast(text) {
     try {
-        const body = await Request.post({
-            url: 'https://api.douban.com/v2/lifestream/statuses',
+        const body = await FrodoRequest.post({
+            url: 'https://frodo.douban.com/api/v2/status/create_status',
             encoding: 'utf8',
             headers: {
                 'User-Agent': userAgent,
                 'Authorization': `Bearer ${accessToken}`
             },
             form: {
-                version: 2,
-                text: text,
+                text: text
             },
             json: true,
         });
