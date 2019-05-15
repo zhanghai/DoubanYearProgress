@@ -16,20 +16,27 @@ const config = require('./config.js');
 
 const timezone = 'Asia/Shanghai';
 
-const userAgent = `api-client/1 com.douban.frodo/6.0.1(138) Android/${config.api.device.sdkInt} product/${
-        config.api.device.product} vendor/${config.api.device.manufacturer} model/${config.api.device.model
-        }  rom/android  network/wifi`;
-
 let accessToken = null;
 
 const FrodoRequest = Request.defaults(params => {
-    let signature = params.method;
+
+    params.encoding = 'utf8';
+    if (!params.headers) {
+        params.headers = {};
+    }
+    params.headers['User-Agent'] = `api-client/1 com.douban.frodo/6.0.1(138) Android/${config.api.device.sdkInt
+            } product/${config.api.device.product} vendor/${config.api.device.manufacturer} model/${
+            config.api.device.model}  rom/android  network/wifi`;
+
     const path = new URL(params.url).pathname;
-    const signaturePath = encodeURIComponent(decodeURIComponent(path).replace(/\/$/, ''));
-    signature += `&${signaturePath}`;
-    if (params.headers && params.headers.Authorization) {
-        const signatureAuthToken = params.headers.Authorization.substring(7);
-        signature += `&${signatureAuthToken}`;
+    if (path !== '/service/auth2/token') {
+        params.headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    let signature = params.method;
+    signature += `&${encodeURIComponent(decodeURIComponent(path).replace(/\/$/, ''))}`;
+    if (params.headers.Authorization) {
+        signature += `&${params.headers.Authorization.substring(7)}`;
     }
     const timestamp = Math.floor(Date.now() / 1000).toString();
     signature += `&${timestamp}`;
@@ -58,6 +65,7 @@ const FrodoRequest = Request.defaults(params => {
             params.url = url.href;
         }
     }
+
     return Request(params);
 });
 
@@ -67,10 +75,6 @@ const FrodoRequest = Request.defaults(params => {
 async function authenticate() {
     const body = await FrodoRequest.post({
         url: 'https://frodo.douban.com/service/auth2/token',
-        encoding: 'utf8',
-        headers: {
-            'User-Agent': userAgent
-        },
         form: {
             client_id: config.api.key,
             client_secret: config.api.secret,
@@ -96,15 +100,10 @@ async function sendBroadcast(text) {
     try {
         const body = await FrodoRequest.post({
             url: 'https://frodo.douban.com/api/v2/status/create_status',
-            encoding: 'utf8',
-            headers: {
-                'User-Agent': userAgent,
-                'Authorization': `Bearer ${accessToken}`
-            },
             form: {
                 text: text
             },
-            json: true,
+            json: true
         });
         console.log(body);
     } catch (error) {
