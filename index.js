@@ -22,19 +22,48 @@ const timezone = 'Asia/Shanghai';
 let accessToken = null;
 
 const FrodoRequest = Request.defaults(params => {
-
     params.encoding = 'utf8';
+
     if (!params.headers) {
         params.headers = {};
     }
-    params.headers['User-Agent'] = `api-client/1 com.douban.frodo/6.0.1(138) Android/${config.api.device.sdkInt
-            } product/${config.api.device.product} vendor/${config.api.device.manufacturer} model/${
-            config.api.device.model}  rom/android  network/wifi`;
-
     const path = new URL(params.url).pathname;
     if (path !== '/service/auth2/token') {
         params.headers.Authorization = `Bearer ${accessToken}`;
     }
+
+    function addParameter(name, value) {
+        switch (params.method) {
+            case 'PATCH':
+            case 'POST':
+            case 'PROPPATCH':
+            case 'PUT':
+            case 'REPORT':
+                if (params.formData) {
+                    params.formData[name] = value;
+                } else {
+                    if (!params.form) {
+                        params.form = {};
+                    }
+                    params.form[name] = value;
+                }
+                break;
+            default: {
+                if (!params.qs) {
+                    params.qs = {};
+                }
+                params.qs[name] = value;
+            }
+        }
+    }
+
+    params.headers['User-Agent'] = `api-client/1 com.douban.frodo/6.28.1(174) Android/${config.api.device.sdkInt
+            } product/${config.api.device.product} vendor/${config.api.device.manufacturer} model/${
+            config.api.device.model}  rom/android  network/wifi  platform/mobile`;
+    addParameter('os_rom', 'android');
+    addParameter('apikey', config.api.key);
+    addParameter('channel', 'Douban');
+    // TODO: UUID
 
     let signature = params.method;
     signature += `&${encodeURIComponent(decodeURIComponent(path).replace(/\/$/, ''))}`;
@@ -44,30 +73,8 @@ const FrodoRequest = Request.defaults(params => {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     signature += `&${timestamp}`;
     signature = crypto.createHmac('sha1', config.api.secret).update(signature).digest('base64');
-    switch (params.method) {
-        case "PATCH":
-        case "POST":
-        case "PROPPATCH":
-        case "PUT":
-        case "REPORT":
-            if (params.formData) {
-                params.formData._sig = signature;
-                params.formData._ts = timestamp;
-            } else {
-                if (!params.form) {
-                    params.form = {};
-                }
-                params.form._sig = signature;
-                params.form._ts = timestamp;
-            }
-            break;
-        default: {
-            const url = new URL(params.url);
-            url.searchParams.append('_sig', signature);
-            url.searchParams.append('_ts', timestamp);
-            params.url = url.href;
-        }
-    }
+    addParameter('_sig', signature);
+    addParameter('_ts', timestamp);
 
     return Request(params);
 });
@@ -126,10 +133,10 @@ async function sendBroadcast(text) {
 }
 
 const SOLAR_TERM_NAMES = [
-    "立春", "雨水", "惊蛰", "春分", "清明", "谷雨",
-    "立夏", "小满", "芒种", "夏至", "小暑", "大暑",
-    "立秋", "处暑", "白露", "秋分", "寒露", "霜降",
-    "立冬", "小雪", "大雪", "冬至", "小寒", "大寒"
+    '立春', '雨水', '惊蛰', '春分', '清明', '谷雨',
+    '立夏', '小满', '芒种', '夏至', '小暑', '大暑',
+    '立秋', '处暑', '白露', '秋分', '寒露', '霜降',
+    '立冬', '小雪', '大雪', '冬至', '小寒', '大寒'
 ];
 
 /**
@@ -219,7 +226,6 @@ async function sendYearProgress() {
  * @return {Promise.<void>}
  */
 async function main() {
-
     await authenticate();
     await sendYearProgress();
 
