@@ -65,7 +65,7 @@ const FrodoRequest = Request.defaults(params => {
     addParameter('channel', 'Douban');
     // TODO: UUID
 
-    let signature = params.method;
+    let signature = params.method || 'GET';
     signature += `&${encodeURIComponent(decodeURIComponent(path).replace(/\/$/, ''))}`;
     if (params.headers.Authorization) {
         signature += `&${params.headers.Authorization.substring(7)}`;
