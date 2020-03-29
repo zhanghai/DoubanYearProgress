@@ -14,7 +14,6 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "node index.js",
     "download-holidays-ics": "wget -O china__zh_cn@holiday.calendar.google.com.ics http://www.google.com/calendar/ical/china__zh_cn@holiday.calendar.google.com/public/basic.ics"
   },
   "repository": {
