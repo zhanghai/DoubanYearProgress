@@ -8,7 +8,8 @@ module.exports = {
             sdkInt: 0,
             product: '',
             manufacturer: '',
-            model: ''
+            model: '',
+            id: ''
         }
     },
     username: '',

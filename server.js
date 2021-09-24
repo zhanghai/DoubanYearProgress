@@ -57,13 +57,13 @@ const FrodoRequest = Request.defaults(params => {
         }
     }
 
-    params.headers['User-Agent'] = `api-client/1 com.douban.frodo/6.28.1(174) Android/${config.api.device.sdkInt
+    params.headers['User-Agent'] = `api-client/1 com.douban.frodo/7.13.0(223) Android/${config.api.device.sdkInt
             } product/${config.api.device.product} vendor/${config.api.device.manufacturer} model/${
-            config.api.device.model}  rom/android  network/wifi  platform/mobile`;
-    addParameter('os_rom', 'android');
+            config.api.device.model}  rom/android  network/wifi  udid/${config.api.device.id}  platform/mobile`;
+    addParameter('udid', config.api.device.id)
     addParameter('apikey', config.api.key);
+    addParameter('os_rom', 'android');
     addParameter('channel', 'Douban');
-    // TODO: UUID
 
     let signature = params.method || 'GET';
     signature += `&${encodeURIComponent(decodeURIComponent(path).replace(/\/$/, ''))}`;
@@ -89,6 +89,7 @@ async function authenticate() {
             client_id: config.api.key,
             client_secret: config.api.secret,
             redirect_uri: 'frodo://app/oauth/callback/',
+            disable_account_create: 'false',
             grant_type: 'password',
             username: config.username,
             password: config.password
