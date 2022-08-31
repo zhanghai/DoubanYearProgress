@@ -6,7 +6,7 @@
   "dependencies": {
     "date-chinese": "^2.1.0",
     "ical.js": "^1.4.0",
-    "moment-timezone": "^0.5.33",
+    "moment-timezone": "^0.5.35",
     "node-schedule": "^2.0.0",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
