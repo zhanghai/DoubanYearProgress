@@ -4,10 +4,10 @@
   "description": "Year progress for Douban",
   "main": "index.js",
   "dependencies": {
-    "date-chinese": "^2.1.0",
-    "ical.js": "^1.4.0",
-    "moment-timezone": "^0.5.33",
-    "node-schedule": "^2.0.0",
+    "date-chinese": "^2.1.4",
+    "ical.js": "^1.5.0",
+    "moment-timezone": "^0.5.37",
+    "node-schedule": "^2.1.0",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
     "util.promisify": "^1.1.1"
