@@ -1,4 +1,4 @@
-# DoubanYearProgress
+china__zh_cn@holiday.calendar.google.com.ics# DoubanYearProgress
 
 A year progress bar for Douban.
 
